@@ -12,6 +12,15 @@ export class Assignment1Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    //Tables
+
+    const moviesTable = new dynamodb.Table(this, "MoviesTable", {  //Movies tables in dynamodb aws
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      tableName: "Movies",
+    });
+
     const simpleFn = new lambdanode.NodejsFunction(this, "SimpleFn", {
       architecture: lambda.Architecture.ARM_64,
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -25,13 +34,6 @@ export class Assignment1Stack extends cdk.Stack {
       cors: {
         allowedOrigins: ["*"],
       },
-    });
-
-    const moviesTable = new dynamodb.Table(this, "MoviesTable", {  //Movies tables in dynamodb aws
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      tableName: "Movies",
     });
 
     new custom.AwsCustomResource(this, "moviesddbInitData", {
@@ -50,7 +52,34 @@ export class Assignment1Stack extends cdk.Stack {
       }),
     });
 
-    new cdk.CfnOutput(this, "Function Url", { value: simpleFnURL.url });
+    const getMovieByIdFn = new lambdanode.NodejsFunction(
+      this,
+      "GetMovieByIdFn",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: `${__dirname}/../lambdas/getMovieById.ts`,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          TABLE_NAME: moviesTable.tableName,
+          REGION: 'eu-west-1',
+        },
+      }
+    );
+
+    const getMovieByIdURL = getMovieByIdFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ["*"],
+      },
+    });
+
+    //permissions
+    moviesTable.grantReadData(getMovieByIdFn)
+
+    //url outputs in terminal
+    new cdk.CfnOutput(this, "Get Movie Function Url", { value: getMovieByIdURL.url });
 
   }
 }
