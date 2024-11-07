@@ -16,5 +16,14 @@ export class Assignment1Stack extends cdk.Stack {
       memorySize: 128,
     });
 
+    const simpleFnURL = simpleFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE, //AWS_IAM authentication for postman through AWS_IAM 
+      cors: {
+        allowedOrigins: ["*"],
+      },
+    });
+
+    new cdk.CfnOutput(this, "Function Url", { value: simpleFnURL.url });
+
   }
 }
