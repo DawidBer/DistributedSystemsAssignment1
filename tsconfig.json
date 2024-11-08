@@ -27,5 +27,8 @@
   "exclude": [
     "node_modules",
     "cdk.out"
+  ],
+  "include": [
+      "C:/Users/David/OneDrive/Desktop/4TH BLISS/Distributed Systems/Assignment1/shared"
   ]
 }

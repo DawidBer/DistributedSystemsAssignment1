@@ -14,7 +14,6 @@ export class Assignment1Stack extends cdk.Stack {
     super(scope, id, props);
 
     //Tables
-
     const moviesTable = new dynamodb.Table(this, "MoviesTable", {  //Movies tables in dynamodb aws
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
@@ -37,7 +36,6 @@ export class Assignment1Stack extends cdk.Stack {
 
 
     //Functions
-
     new custom.AwsCustomResource(this, "moviesddbInitData", {
       onCreate: {
         service: "DynamoDB",
@@ -104,6 +102,18 @@ export class Assignment1Stack extends cdk.Stack {
          }
         );
 
+        const newMovieFn = new lambdanode.NodejsFunction(this, "AddMovieFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_16_X,
+          entry: `${__dirname}/../lambdas/addMovie.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: moviesTable.tableName,
+            REGION: "eu-west-1",
+          },
+        });
+
     //URL Functions
     const getMovieByIdURL = getMovieByIdFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
@@ -130,6 +140,7 @@ export class Assignment1Stack extends cdk.Stack {
     moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
     movieCastsTable.grantReadData(getMovieCastMembersFn)
+    moviesTable.grantReadWriteData(newMovieFn)
 
     //Rest API
     const api = new apig.RestApi(this, "RestAPI", {
@@ -145,16 +156,24 @@ export class Assignment1Stack extends cdk.Stack {
       },
     });
 
+    //get all movies
     const moviesEndpoint = api.root.addResource("movies");
     moviesEndpoint.addMethod(
       "GET",
       new apig.LambdaIntegration(getAllMoviesFn, { proxy: true })
     );
 
+    //Get movie by id
     const movieEndpoint = moviesEndpoint.addResource("{movieId}");
     movieEndpoint.addMethod(
       "GET",
       new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
+    );
+
+    //add movie post
+    moviesEndpoint.addMethod(
+      "POST",
+      new apig.LambdaIntegration(newMovieFn, { proxy: true })
     );
 
     //url outputs in terminal
