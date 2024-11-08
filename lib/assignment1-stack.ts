@@ -21,19 +21,14 @@ export class Assignment1Stack extends cdk.Stack {
       tableName: "Movies",
     });
 
+
+    //Functions
     const simpleFn = new lambdanode.NodejsFunction(this, "SimpleFn", {
       architecture: lambda.Architecture.ARM_64,
       runtime: lambda.Runtime.NODEJS_18_X,
       entry: `${__dirname}/../lambdas/simple.ts`,
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
-    });
-
-    const simpleFnURL = simpleFn.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE, //AWS_IAM authentication for postman through AWS_IAM 
-      cors: {
-        allowedOrigins: ["*"],
-      },
     });
 
     new custom.AwsCustomResource(this, "moviesddbInitData", {
@@ -68,7 +63,30 @@ export class Assignment1Stack extends cdk.Stack {
       }
     );
 
+    const getAllMoviesFn = new lambdanode.NodejsFunction(
+      this,
+      "GetAllMoviesFn",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: `${__dirname}/../lambdas/getAllMovies.ts`,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          TABLE_NAME: moviesTable.tableName,
+          REGION: 'eu-west-1',
+        },
+      }
+      );
+
     const getMovieByIdURL = getMovieByIdFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ["*"],
+      },
+    });
+
+    const getAllMoviesURL = getAllMoviesFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowedOrigins: ["*"],
@@ -77,9 +95,11 @@ export class Assignment1Stack extends cdk.Stack {
 
     //permissions
     moviesTable.grantReadData(getMovieByIdFn)
+    moviesTable.grantReadData(getAllMoviesFn)
 
     //url outputs in terminal
     new cdk.CfnOutput(this, "Get Movie Function Url", { value: getMovieByIdURL.url });
+    new cdk.CfnOutput(this, "Get Movies list Function Url", { value: getAllMoviesURL.url });
 
   }
 }
