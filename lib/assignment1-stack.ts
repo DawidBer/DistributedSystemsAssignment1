@@ -155,6 +155,7 @@ export class Assignment1Stack extends cdk.Stack {
     moviesTable.grantReadWriteData(newMovieFn)
     moviesTable.grantReadWriteData(deleteMovieFn)
     movieCastsTable.grantReadData(getMovieCastMemberFn)
+    movieCastsTable.grantReadData(getMovieByIdFn)
     
 
     //Rest API
