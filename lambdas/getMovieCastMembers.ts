@@ -2,6 +2,7 @@ import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
+  GetCommand,
   QueryCommand,
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
@@ -11,7 +12,9 @@ const ddbDocClient = createDocumentClient();
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("Event: ", JSON.stringify(event));
+
     const queryParams = event.queryStringParameters;
+
     if (!queryParams) {
       return {
         statusCode: 500,
@@ -31,9 +34,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
  };
  }
     const movieId = parseInt(queryParams?.movieId);
+    const includeFacts = queryParams.facts === "true";
+
     let commandInput: QueryCommandInput = {
       TableName: process.env.CAST_TABLE_NAME,
  };
+ 
     if ("roleName" in queryParams) {
       commandInput = {
  ...commandInput,
@@ -53,14 +59,24 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
           ":a": queryParams.actorName,
  },
  };
+//  } 
+//else if (includeFacts){
+//       commandInput = {
+//         ...commandInput,
+//         TableName: process.env.TABLE_NAME,
+//         KeyConditionExpression: "movieId = :m",
+//         ExpressionAttributeValues: {
+//           ":m": movieId,
+//           },
+//         };
  } else {
-      commandInput = {
- ...commandInput,
+    commandInput = {
+        ...commandInput,
         KeyConditionExpression: "movieId = :m",
         ExpressionAttributeValues: {
           ":m": movieId,
- },
- };
+        },
+      };
  }
 
     const commandOutput = await ddbDocClient.send(

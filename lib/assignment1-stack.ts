@@ -5,6 +5,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from "../shared/util";
 import {movies, movieCasts} from "../seed/movies";
+import * as apig from "aws-cdk-lib/aws-apigateway";
 
 import { Construct } from 'constructs';
 
@@ -37,14 +38,6 @@ export class Assignment1Stack extends cdk.Stack {
 
     //Functions
 
-    // const simpleFn = new lambdanode.NodejsFunction(this, "SimpleFn", {
-    //   architecture: lambda.Architecture.ARM_64,
-    //   runtime: lambda.Runtime.NODEJS_18_X,
-    //   entry: `${__dirname}/../lambdas/simple.ts`,
-    //   timeout: cdk.Duration.seconds(10),
-    //   memorySize: 128,
-    // });
-
     new custom.AwsCustomResource(this, "moviesddbInitData", {
       onCreate: {
         service: "DynamoDB",
@@ -73,6 +66,7 @@ export class Assignment1Stack extends cdk.Stack {
         memorySize: 128,
         environment: {
           TABLE_NAME: moviesTable.tableName,
+          CAST_TABLE_NAME: movieCastsTable.tableName,
           REGION: 'eu-west-1',
         },
       }
@@ -137,8 +131,34 @@ export class Assignment1Stack extends cdk.Stack {
     moviesTable.grantReadData(getAllMoviesFn)
     movieCastsTable.grantReadData(getMovieCastMembersFn)
 
+    //Rest API
+    const api = new apig.RestApi(this, "RestAPI", {
+      description: "Assignment api",
+      deployOptions: {
+        stageName: "dev",
+      },
+      defaultCorsPreflightOptions: {
+        allowHeaders: ["Content-Type", "X-Amz-Date"],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["*"],
+      },
+    });
+
+    const moviesEndpoint = api.root.addResource("movies");
+    moviesEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getAllMoviesFn, { proxy: true })
+    );
+
+    const movieEndpoint = moviesEndpoint.addResource("{movieId}");
+    movieEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
+    );
+
     //url outputs in terminal
-    new cdk.CfnOutput(this, "Get Movie Function Url", { value: getMovieByIdURL.url });
+    new cdk.CfnOutput(this, "Get Movie by id function Url", { value: getMovieByIdURL.url });
     new cdk.CfnOutput(this, "Get Movies list Function Url", { value: getAllMoviesURL.url });
     new cdk.CfnOutput(this, "Get Movie Cast members url", { value: getMovieCastMembersURL.url });
 
