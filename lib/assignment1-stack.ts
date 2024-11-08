@@ -21,7 +21,7 @@ export class Assignment1Stack extends cdk.Stack {
       tableName: "Movies",
     });
 
-    const movieCastsTable = new dynamodb.Table(this, "MovieCastTable", { //Movie Cast Table
+    const movieCastsTable = new dynamodb.Table(this, "MovieCastTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
       sortKey: { name: "actorName", type: dynamodb.AttributeType.STRING },
@@ -30,12 +30,10 @@ export class Assignment1Stack extends cdk.Stack {
     });
 
     movieCastsTable.addLocalSecondaryIndex({
-    indexName: "roleIx",
-    sortKey: { name: "roleName", type: dynamodb.AttributeType.STRING },
+      indexName: "roleIx",
+      sortKey: { name: "roleName", type: dynamodb.AttributeType.STRING },
     });
 
-
-    //Functions
     new custom.AwsCustomResource(this, "moviesddbInitData", {
       onCreate: {
         service: "DynamoDB",
@@ -43,16 +41,17 @@ export class Assignment1Stack extends cdk.Stack {
         parameters: {
           RequestItems: {
             [moviesTable.tableName]: generateBatch(movies),
-            [movieCastsTable.tableName]: generateBatch(movieCasts),
+            [movieCastsTable.tableName]: generateBatch(movieCasts),  // Added
           },
         },
         physicalResourceId: custom.PhysicalResourceId.of("moviesddbInitData"), //.of(Date.now().toString()),
       },
       policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-        resources: [moviesTable.tableArn, movieCastsTable.tableArn],
+        resources: [moviesTable.tableArn, movieCastsTable.tableArn],  // Includes movie cast
       }),
     });
 
+    //Functions
     const getMovieByIdFn = new lambdanode.NodejsFunction(
       this,
       "GetMovieByIdFn",
@@ -86,21 +85,21 @@ export class Assignment1Stack extends cdk.Stack {
       }
       );
 
-      const getMovieCastMembersFn = new lambdanode.NodejsFunction(
+      const getMovieCastMemberFn = new lambdanode.NodejsFunction(
         this,
         "GetCastMemberFn",
-       {
+        {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
-          entry: `${__dirname}/../lambdas/getMovieCastMembers.ts`,
+          entry: `${__dirname}/../lambdas/getMovieCastMember.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
-            CAST_TABLE_NAME: movieCastsTable.tableName,
+            TABLE_NAME: movieCastsTable.tableName,
             REGION: "eu-west-1",
-           },
-         }
-        );
+          },
+        }
+      );
         
         //add movie
         const newMovieFn = new lambdanode.NodejsFunction(this, "AddMovieFn", {
@@ -143,7 +142,7 @@ export class Assignment1Stack extends cdk.Stack {
       },
     });
 
-    const getMovieCastMembersURL = getMovieCastMembersFn.addFunctionUrl({
+    const getMovieCastMemberURL = getMovieCastMemberFn.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
       cors: {
         allowedOrigins: ["*"],
@@ -153,9 +152,9 @@ export class Assignment1Stack extends cdk.Stack {
     //permissions
     moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
-    movieCastsTable.grantReadData(getMovieCastMembersFn)
     moviesTable.grantReadWriteData(newMovieFn)
     moviesTable.grantReadWriteData(deleteMovieFn)
+    movieCastsTable.grantReadData(getMovieCastMemberFn)
     
 
     //Rest API
@@ -186,6 +185,13 @@ export class Assignment1Stack extends cdk.Stack {
       new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
     );
 
+    //Get movie cast
+    const movieCastEndpoint = moviesEndpoint.addResource("cast");
+    movieCastEndpoint.addMethod(
+    "GET",
+    new apig.LambdaIntegration(getMovieCastMemberFn, { proxy: true })
+    );
+
     //add movie post
     moviesEndpoint.addMethod(
       "POST",
@@ -201,7 +207,7 @@ export class Assignment1Stack extends cdk.Stack {
     //url outputs in terminal
     new cdk.CfnOutput(this, "Get Movie by id function Url", { value: getMovieByIdURL.url });
     new cdk.CfnOutput(this, "Get Movies list Function Url", { value: getAllMoviesURL.url });
-    new cdk.CfnOutput(this, "Get Movie Cast members url", { value: getMovieCastMembersURL.url });
+    new cdk.CfnOutput(this, "Get Movie Cast members url", { value: getMovieCastMemberURL.url });
 
 
   }
