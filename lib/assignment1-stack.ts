@@ -101,11 +101,25 @@ export class Assignment1Stack extends cdk.Stack {
            },
          }
         );
-
+        
+        //add movie
         const newMovieFn = new lambdanode.NodejsFunction(this, "AddMovieFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
           entry: `${__dirname}/../lambdas/addMovie.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: moviesTable.tableName,
+            REGION: "eu-west-1",
+          },
+        });
+
+        //delete movie
+        const deleteMovieFn = new lambdanode.NodejsFunction(this, "DeleteMovieFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_18_X,
+          entry: `${__dirname}/../lambdas/deleteMovie.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
@@ -141,6 +155,8 @@ export class Assignment1Stack extends cdk.Stack {
     moviesTable.grantReadData(getAllMoviesFn)
     movieCastsTable.grantReadData(getMovieCastMembersFn)
     moviesTable.grantReadWriteData(newMovieFn)
+    moviesTable.grantReadWriteData(deleteMovieFn)
+    
 
     //Rest API
     const api = new apig.RestApi(this, "RestAPI", {
@@ -174,6 +190,12 @@ export class Assignment1Stack extends cdk.Stack {
     moviesEndpoint.addMethod(
       "POST",
       new apig.LambdaIntegration(newMovieFn, { proxy: true })
+    );
+
+    //delete movie
+    moviesEndpoint.addMethod(
+      "DELETE",
+      new apig.LambdaIntegration(deleteMovieFn, { proxy: true })
     );
 
     //url outputs in terminal
