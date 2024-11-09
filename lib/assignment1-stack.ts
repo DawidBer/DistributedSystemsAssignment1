@@ -126,6 +126,23 @@ export class Assignment1Stack extends cdk.Stack {
             REGION: "eu-west-1",
           },
         });
+        
+        //Added
+
+        //edit movie
+        const editMovieFn = new lambdanode.NodejsFunction(this, "EditMovieFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_16_X,
+          entry: `${__dirname}/../lambdas/editMovie.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: moviesTable.tableName,
+            REGION: "eu-west-1",
+          },
+        });
+
+        //Added
 
     //URL Functions
     const getMovieByIdURL = getMovieByIdFn.addFunctionUrl({
@@ -156,6 +173,10 @@ export class Assignment1Stack extends cdk.Stack {
     moviesTable.grantReadWriteData(deleteMovieFn)
     movieCastsTable.grantReadData(getMovieCastMemberFn)
     movieCastsTable.grantReadData(getMovieByIdFn)
+
+    //Added
+    moviesTable.grantReadWriteData(editMovieFn)
+    //Added
     
 
     //Rest API
@@ -204,6 +225,13 @@ export class Assignment1Stack extends cdk.Stack {
       "DELETE",
       new apig.LambdaIntegration(deleteMovieFn, { proxy: true })
     );
+
+    //Added
+    moviesEndpoint.addMethod(
+      "PUT",
+      new apig.LambdaIntegration(editMovieFn, { proxy: true })
+    );
+    //Added
 
     //url outputs in terminal
     new cdk.CfnOutput(this, "Get Movie by id function Url", { value: getMovieByIdURL.url });
