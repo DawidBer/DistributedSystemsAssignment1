@@ -58,6 +58,12 @@ export class Assignment1Stack extends cdk.Stack {
       "ConfirmFn",
       "confirm-signup.ts"
     );
+
+    //signout
+    this.addAuthRoute('signout', 'GET', 'SignoutFn', 'signout.ts');
+
+    //signin
+    this.addAuthRoute('signin', 'POST', 'SigninFn', 'signin.ts');
     //Authenticate
 
     //Tables
