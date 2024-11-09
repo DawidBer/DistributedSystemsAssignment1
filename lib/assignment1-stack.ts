@@ -20,6 +20,7 @@ export class Assignment1Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    //Authenticate
     const userPool = new UserPool(this, "UserPool", {
       signInAliases: { username: true, email: true },
       selfSignUpEnabled: true,
@@ -43,7 +44,15 @@ export class Assignment1Stack extends cdk.Stack {
     });
 
     this.auth = authApi.root.addResource("auth");
-    
+
+    this.addAuthRoute(
+      "signup",
+      "POST",
+      "SignupFn",
+      'signup.ts'
+    );
+    //Authenticate
+
     //Tables
     const moviesTable = new dynamodb.Table(this, "MoviesTable", {  //Movies tables in dynamodb aws
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -297,7 +306,7 @@ export class Assignment1Stack extends cdk.Stack {
     
     const fn = new node.NodejsFunction(this, fnName, {
       ...commonFnProps,
-      entry: `${__dirname}/../lambda/auth/${fnEntry}`,
+      entry: `${__dirname}/../lambdas/auth/${fnEntry}`,
     });
 
     resource.addMethod(method, new apig.LambdaIntegration(fn));
