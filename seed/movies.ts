@@ -15,7 +15,8 @@ export const movies : Movie[] = [
     title: 'Rebel Moon - Part One: A Child of Fire',
     video: false,
     vote_average: 6.4,
-    vote_count: 750
+    vote_count: 750,
+    translations: {}
   },
   {
     adult: false,
@@ -31,7 +32,8 @@ export const movies : Movie[] = [
     title: 'Aquaman and the Lost Kingdom',
     video: false,
     vote_average: 6.5,
-    vote_count: 299
+    vote_count: 299,
+    translations: {}
   },
   {
     adult: false,
@@ -47,7 +49,8 @@ export const movies : Movie[] = [
     title: 'The Hunger Games: The Ballad of Songbirds & Snakes',
     video: false,
     vote_average: 7.2,
-    vote_count: 1181
+    vote_count: 1181,
+    translations: {}
   },
   {
     adult: false,
@@ -63,7 +66,8 @@ export const movies : Movie[] = [
     title: 'The Family Plan',
     video: false,
     vote_average: 7.3,
-    vote_count: 457
+    vote_count: 457,
+    translations: {}
   },
   {
     adult: false,
@@ -79,7 +83,8 @@ export const movies : Movie[] = [
     title: 'Wonka',
     video: false,
     vote_average: 7.2,
-    vote_count: 703
+    vote_count: 703,
+    translations: {}
   },
   {
     adult: false,
@@ -95,7 +100,8 @@ export const movies : Movie[] = [
     title: 'Silent Night',
     video: false,
     vote_average: 5.8,
-    vote_count: 181
+    vote_count: 181,
+    translations: {}
   },
   {
     adult: false,
@@ -111,7 +117,8 @@ export const movies : Movie[] = [
     title: 'Doors',
     video: false,
     vote_average: 5,
-    vote_count: 119
+    vote_count: 119,
+    translations: {}
   },
   {
     adult: false,
@@ -127,7 +134,8 @@ export const movies : Movie[] = [
     title: 'Oppenheimer',
     video: false,
     vote_average: 8.1,
-    vote_count: 5713
+    vote_count: 5713,
+    translations: {}
   },
   {
     adult: false,
@@ -143,7 +151,8 @@ export const movies : Movie[] = [
     title: 'Saltburn',
     video: false,
     vote_average: 7.1,
-    vote_count: 473
+    vote_count: 473,
+    translations: {}
   },
   {
     adult: false,
@@ -159,7 +168,8 @@ export const movies : Movie[] = [
     title: 'Killers of the Flower Moon',
     video: false,
     vote_average: 7.5,
-    vote_count: 1647
+    vote_count: 1647,
+    translations: {}
   },
   {
     adult: false,
@@ -175,7 +185,8 @@ export const movies : Movie[] = [
     title: 'Thanksgiving',
     video: false,
     vote_average: 6.7,
-    vote_count: 347
+    vote_count: 347,
+    translations: {}
   },
   {
     adult: false,
@@ -191,7 +202,8 @@ export const movies : Movie[] = [
     title: 'Trolls Band Together',
     video: false,
     vote_average: 7.2,
-    vote_count: 436
+    vote_count: 436,
+    translations: {}
   },
   {
     adult: false,
@@ -207,7 +219,8 @@ export const movies : Movie[] = [
     title: 'Fast X',
     video: false,
     vote_average: 7.2,
-    vote_count: 4566
+    vote_count: 4566,
+    translations: {}
   },
   {
     adult: false,
@@ -223,7 +236,8 @@ export const movies : Movie[] = [
     title: 'The Serpent',
     video: false,
     vote_average: 3.8,
-    vote_count: 12
+    vote_count: 12,
+    translations: {}
   },
   {
     adult: false,
@@ -239,7 +253,8 @@ export const movies : Movie[] = [
     title: 'The Creator',
     video: false,
     vote_average: 7.2,
-    vote_count: 1645
+    vote_count: 1645,
+    translations: {}
   },
   {
     adult: false,
@@ -255,7 +270,8 @@ export const movies : Movie[] = [
     title: 'Rewind',
     video: false,
     vote_average: 0,
-    vote_count: 0
+    vote_count: 0,
+    translations: {}
   },
   {
     adult: false,
@@ -271,7 +287,8 @@ export const movies : Movie[] = [
     title: 'Skydog',
     video: false,
     vote_average: 7.3,
-    vote_count: 8
+    vote_count: 8,
+    translations: {}
   },
   {
     adult: false,
@@ -287,7 +304,8 @@ export const movies : Movie[] = [
     title: 'Freelance',
     video: false,
     vote_average: 6.5,
-    vote_count: 390
+    vote_count: 390,
+    translations: {}
   },
   {
     adult: false,
@@ -303,7 +321,8 @@ export const movies : Movie[] = [
     title: "Five Nights at Freddy's",
     video: false,
     vote_average: 7.8,
-    vote_count: 2993
+    vote_count: 2993,
+    translations: {}
   },
   {
     adult: false,
@@ -319,7 +338,8 @@ export const movies : Movie[] = [
     title: 'Chicken Run: Dawn of the Nugget',
     video: false,
     vote_average: 7.4,
-    vote_count: 325
+    vote_count: 325,
+    translations: {}
   }
 ]
 

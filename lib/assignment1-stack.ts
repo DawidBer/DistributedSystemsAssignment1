@@ -162,8 +162,20 @@ export class Assignment1Stack extends cdk.Stack {
             REGION: "eu-west-1",
           },
         });
-        
-        //Added
+
+
+        //translate
+        const translateFn = new lambdanode.NodejsFunction(this, "TranslateMovieFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_16_X,
+          entry: `${__dirname}/../lambdas/translate.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: moviesTable.tableName,
+            REGION: "eu-west-1",
+          },
+        });
 
         //edit movie
         const editMovieFn = new lambdanode.NodejsFunction(this, "EditMovieFn", {
@@ -178,31 +190,8 @@ export class Assignment1Stack extends cdk.Stack {
           },
         });
 
-        //Added
 
-    //URL Functions
-//     const getMovieByIdURL = getMovieByIdFn.addFunctionUrl({
-//       authType: lambda.FunctionUrlAuthType.NONE,
-//       cors: {
-//         allowedOrigins: ["*"],
-//       },
-//     });
-
-//     const getAllMoviesURL = getAllMoviesFn.addFunctionUrl({
-//       authType: lambda.FunctionUrlAuthType.NONE,
-//       cors: {
-//         allowedOrigins: ["*"],
-//       },
-//     });
-
-//     const getMovieCastMemberURL = getMovieCastMemberFn.addFunctionUrl({
-//       authType: lambda.FunctionUrlAuthType.NONE,
-//       cors: {
-//         allowedOrigins: ["*"],
-//  },
-//  });  
-
-    //permissions
+        //permissions
     moviesTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadData(getAllMoviesFn)
     moviesTable.grantReadWriteData(newMovieFn)
@@ -210,7 +199,14 @@ export class Assignment1Stack extends cdk.Stack {
     movieCastsTable.grantReadData(getMovieCastMemberFn)
     movieCastsTable.grantReadData(getMovieByIdFn)
     moviesTable.grantReadWriteData(editMovieFn)
-    
+    moviesTable.grantReadWriteData(translateFn)
+    translateFn.addToRolePolicy(new cdk.aws_iam.PolicyStatement({
+      actions: [
+        "translate:TranslateText",
+        "comprehend:DetectDominantLanguage"
+      ],
+      resources: ["*"],
+    }))
 
     //Rest API
     const api = new apig.RestApi(this, "RestAPI", {
@@ -259,12 +255,18 @@ export class Assignment1Stack extends cdk.Stack {
       new apig.LambdaIntegration(deleteMovieFn, { proxy: true })
     );
 
-    //Added
+    //edit movie
     moviesEndpoint.addMethod(
       "PUT",
       new apig.LambdaIntegration(editMovieFn, { proxy: true })
     );
-    //Added
+
+    //Get translate movie
+    const translationEndpoint = movieEndpoint.addResource("translate");
+    translationEndpoint.addMethod(
+    "GET",
+    new apig.LambdaIntegration(translateFn, { proxy: true })
+    );
 
     //url outputs in terminal
     // new cdk.CfnOutput(this, "Get Movie by id function Url", { value: getMovieByIdURL.url });
