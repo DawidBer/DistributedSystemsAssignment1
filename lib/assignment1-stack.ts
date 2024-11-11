@@ -14,6 +14,7 @@ import * as node from "aws-cdk-lib/aws-lambda-nodejs";
 import { AuthApi } from './auth-api'
 import { AppApi } from './app-api'
 
+
 export class Assignment1Stack extends cdk.Stack {
   // private auth: apig.IResource;
   // private userPoolId: string;
@@ -42,7 +43,7 @@ export class Assignment1Stack extends cdk.Stack {
       userPoolClientId: userPoolClientId,
     });
 
-    new AppApi(this, 'AppApi', {
+    new AppApi(this, 'aaappApi', {
       userPoolId: userPoolId,
       userPoolClientId: userPoolClientId,
     });
@@ -222,6 +223,53 @@ export class Assignment1Stack extends cdk.Stack {
       },
     });
 
+    const appApi = new apig.RestApi(this, "AppApi", {
+      description: "App RestApi",
+      endpointTypes: [apig.EndpointType.REGIONAL],
+      defaultCorsPreflightOptions: {
+        allowOrigins: apig.Cors.ALL_ORIGINS,
+      },
+    });
+    
+
+    const appCommonFnProps = {
+      architecture: lambda.Architecture.ARM_64,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      runtime: lambda.Runtime.NODEJS_16_X,
+      handler: "handler",
+      environment: {
+        USER_POOL_ID: userPoolId,
+        CLIENT_ID: userPoolClientId,
+        REGION: cdk.Aws.REGION,
+      },
+    };
+
+    const protectedFn = new node.NodejsFunction(this, "ProtectedFn", {
+      ...appCommonFnProps,
+      entry: "./lambdas/protected.ts",
+    });
+
+    const publicFn = new node.NodejsFunction(this, "PublicFn", {
+      ...appCommonFnProps,
+      entry: "./lambdas/public.ts",
+    });
+
+    const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
+      ...appCommonFnProps,
+      entry: "./lambdas/auth/authorizer.ts",
+    });
+    
+    const requestAuthorizer = new apig.RequestAuthorizer(
+      this,
+      "RequestAuthorizer",
+      {
+        identitySources: [apig.IdentitySource.header("cookie")],
+        handler: authorizerFn,
+        resultsCacheTtl: cdk.Duration.minutes(0),
+      }
+    );
+
     //get all movies
     const moviesEndpoint = api.root.addResource("movies");
     moviesEndpoint.addMethod(
@@ -244,10 +292,10 @@ export class Assignment1Stack extends cdk.Stack {
     );
 
     //add movie post
-    moviesEndpoint.addMethod(
-      "POST",
-      new apig.LambdaIntegration(newMovieFn, { proxy: true })
-    );
+    moviesEndpoint.addMethod("POST", new apig.LambdaIntegration(newMovieFn), { 
+        authorizer: requestAuthorizer,
+        authorizationType: apig.AuthorizationType.CUSTOM,
+      });
 
     //delete movie
     moviesEndpoint.addMethod(
@@ -258,8 +306,10 @@ export class Assignment1Stack extends cdk.Stack {
     //edit movie
     moviesEndpoint.addMethod(
       "PUT",
-      new apig.LambdaIntegration(editMovieFn, { proxy: true })
-    );
+      new apig.LambdaIntegration(editMovieFn), {
+        authorizer: requestAuthorizer,
+        authorizationType: apig.AuthorizationType.CUSTOM,
+      });
 
     //Get translate movie
     const translationEndpoint = movieEndpoint.addResource("translate");
